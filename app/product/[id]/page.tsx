@@ -2,6 +2,48 @@ import { shopifyFetch } from "../../../lib/shopify";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import AddToCart from "./AddToCart";
+import { Metadata } from "next";
+
+// 1. DYNAMIC SEO ENGINE: Tells Google exactly what this product is
+export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
+  const resolvedParams = await params;
+  let decodedId = decodeURIComponent(resolvedParams.id);
+  let finalShopifyId = decodedId.includes("gid://") ? decodedId : `gid://shopify/Product/${decodedId}`;
+
+  const query = `
+    query {
+      product(id: "${finalShopifyId}") {
+        title
+        description
+        images(first: 1) {
+          edges {
+            node {
+              url
+            }
+          }
+        }
+      }
+    }
+  `;
+
+  const data = await shopifyFetch({ query });
+  const product = data?.data?.product;
+
+  if (!product) {
+    return { title: 'Product Not Found | CRAZY' };
+  }
+
+  return {
+    title: `${product.title} | CRAZY Premium Streetwear`,
+    description: product.description || "Limited edition heavyweight oversized streetwear by CRAZY.",
+    keywords: ["oversized t-shirt", "heavyweight tee", product.title.toLowerCase(), "premium streetwear India"],
+    openGraph: {
+      title: `${product.title} | CRAZY`,
+      description: product.description,
+      images: product.images?.edges?.[0] ? [{ url: product.images.edges[0].node.url }] : [],
+    },
+  };
+}
 
 export default async function ProductPage({ params }: { params: Promise<{ id: string }> }) {
   // 1. Safely unwrap Next.js dynamic route parameters
@@ -69,9 +111,34 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
   // Extract images array cleanly
   const productImages = product.images?.edges?.map((edge: any) => edge.node) || [];
 
+  // 4. JSON-LD SCHEMA: Tells Google the Price and Stock Status for Rich Search Results
+  const schemaData = {
+    "@context": "https://schema.org/",
+    "@type": "Product",
+    "name": product.title,
+    "image": productImages[0]?.url || "",
+    "description": product.description || "Limited run archive piece.",
+    "brand": {
+      "@type": "Brand",
+      "name": "CRAZY"
+    },
+    "offers": {
+      "@type": "Offer",
+      "priceCurrency": "INR",
+      "price": price,
+      "availability": "https://schema.org/InStock"
+    }
+  };
+
   return (
     <main className="min-h-screen bg-[#030303] text-white selection:bg-white selection:text-black font-sans scroll-smooth antialiased">
       
+      {/* INJECT SCHEMA FOR GOOGLE CRAWLERS */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(schemaData) }}
+      />
+
       {/* GLOBAL NAVIGATION LAYER */}
       <nav className="fixed w-full px-8 py-6 md:px-12 md:py-8 flex justify-between items-center z-50 mix-blend-difference text-white pointer-events-auto">
         <Link href="/" className="text-3xl md:text-4xl font-black tracking-tighter uppercase cursor-pointer">
@@ -97,7 +164,7 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
               <img 
                 key={index}
                 src={img.url} 
-                alt={img.altText || `${product.title} view ${index + 1}`}
+                alt={img.altText || `${product.title} - CRAZY Premium Streetwear`}
                 className="w-full h-auto object-cover hover:scale-[1.02] transition-transform duration-700 ease-out bg-white/5"
               />
             ))
