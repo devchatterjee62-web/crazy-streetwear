@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Script from "next/script";
+import Footer from "./Footer"; 
 
 export const metadata: Metadata = {
   title: "CRAZY | Premium Indian Streetwear",
@@ -14,11 +15,16 @@ export default function RootLayout({
   return (
     <html lang="en" className="bg-black">
       <head>
-        {/* This script bypasses your broken local compiler and forces Tailwind to work */}
         <Script src="https://cdn.tailwindcss.com" strategy="beforeInteractive" />
       </head>
-      <body className="min-h-screen bg-black text-white overflow-x-hidden antialiased">
-        {children}
+      <body className="min-h-screen bg-black text-white overflow-x-hidden antialiased flex flex-col">
+        
+        <main className="flex-grow">
+          {children}
+        </main>
+
+        <Footer />
+        
       </body>
     </html>
   );
