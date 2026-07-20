@@ -38,6 +38,22 @@ export default function RootLayout({
   return (
     <html lang="en" className="bg-black">
       <head>
+        {/* Meta Pixel Code Injected Securely via Next.js Script */}
+        <Script id="meta-pixel" strategy="afterInteractive">
+          {`
+            !function(f,b,e,v,n,t,s)
+            {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+            n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+            if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+            n.queue=[];t=b.createElement(e);t.async=!0;
+            t.src=v;s=b.getElementsByTagName(e)[0];
+            s.parentNode.insertBefore(t,s)}(window, document,'script',
+            'https://connect.facebook.net/en_US/fbevents.js');
+            fbq('init', '4712080449020705');
+            fbq('track', 'PageView');
+          `}
+        </Script>
+
         {/* Forces Tailwind to compile properly */}
         <Script src="https://cdn.tailwindcss.com" strategy="beforeInteractive" />
         
@@ -46,6 +62,17 @@ export default function RootLayout({
       </head>
       <body className="min-h-screen bg-black text-white overflow-x-hidden antialiased flex flex-col">
         
+        {/* Meta Pixel Fallback for browsers with JS disabled */}
+        <noscript>
+          <img 
+            height="1" 
+            width="1" 
+            style={{ display: "none" }}
+            src="https://www.facebook.com/tr?id=4712080449020705&ev=PageView&noscript=1"
+            alt=""
+          />
+        </noscript>
+
         <main className="flex-grow">
           {children}
         </main>
